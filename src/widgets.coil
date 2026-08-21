@@ -6,6 +6,7 @@
 ;; derives from.
 
 (module widgets)
+(import "coil.primitive" :as primitive)
 
 ;; native-widgets — a render-agnostic widget library.
 ;;
@@ -70,12 +71,12 @@
 ;; ---------------------------------------------------------------------------
 
 (defn color-alpha [(red i64) (green i64) (blue i64) (alpha i64)] (-> Color)
-  (let [value (alloc-stack Color)]
+  (let [value (primitive/alloc-stack Color)]
     (do
-      (store! (field value r) (cast u8 red))
-      (store! (field value g) (cast u8 green))
-      (store! (field value b) (cast u8 blue))
-      (store! (field value a) (cast u8 alpha))
+      (set! (.r value) (cast u8 red))
+      (set! (.g value) (cast u8 green))
+      (set! (.b value) (cast u8 blue))
+      (set! (.a value) (cast u8 alpha))
       (load value))))
 
 (defn color [(red i64) (green i64) (blue i64)] (-> Color)
@@ -88,28 +89,28 @@
   (if (> left right) left right))
 
 (defn frame [(left f64) (top f64) (width f64) (height f64)] (-> Frame)
-  (let [value (alloc-stack Frame)]
+  (let [value (primitive/alloc-stack Frame)]
     (do
-      (store! (field value left) left)
-      (store! (field value top) top)
-      (store! (field value width) width)
-      (store! (field value height) height)
+      (set! (.left value) left)
+      (set! (.top value) top)
+      (set! (.width value) width)
+      (set! (.height value) height)
       (load value))))
 
 (defn interaction [(hovered i64) (pressed i64) (focused i64) (disabled i64)] (-> Interaction)
-  (let [value (alloc-stack Interaction)]
+  (let [value (primitive/alloc-stack Interaction)]
     (do
-      (store! (field value hovered) hovered)
-      (store! (field value pressed) pressed)
-      (store! (field value focused) focused)
-      (store! (field value disabled) disabled)
+      (set! (.hovered value) hovered)
+      (set! (.pressed value) pressed)
+      (set! (.focused value) focused)
+      (set! (.disabled value) disabled)
       (load value))))
 
 (defn contains [(bounds Frame) (horizontal f64) (vertical f64)] (-> bool)
-  (and (>= horizontal (load (field bounds left)))
-       (and (<= horizontal (+ (load (field bounds left)) (load (field bounds width))))
-            (and (>= vertical (load (field bounds top)))
-                 (<= vertical (+ (load (field bounds top)) (load (field bounds height))))))))
+  (and (>= horizontal (.left bounds))
+       (and (<= horizontal (+ (.left bounds) (.width bounds)))
+            (and (>= vertical (.top bounds))
+                 (<= vertical (+ (.top bounds) (.height bounds)))))))
 
 (defn contains-int [(bounds Frame) (horizontal f64) (vertical f64)] (-> i64)
   (if (contains bounds horizontal vertical) 1 0))
@@ -149,16 +150,16 @@
 ;; ---------------------------------------------------------------------------
 
 (defn clear [(backend (ptr Backend)) (tint Color)] (-> i64)
-  (call-ptr (load (field backend clear)) (load (field backend ctx)) tint))
+  (call-ptr (.clear backend) (load (field backend ctx)) tint))
 
 (defn rounded-fill [(backend (ptr Backend)) (bounds Frame) (radius f64) (tint Color)] (-> i64)
-  (call-ptr (load (field backend fillRoundedRect)) (load (field backend ctx)) bounds radius tint))
+  (call-ptr (.fillRoundedRect backend) (load (field backend ctx)) bounds radius tint))
 
 (defn rounded-stroke [(backend (ptr Backend)) (bounds Frame) (radius f64) (thickness f64) (tint Color)] (-> i64)
-  (call-ptr (load (field backend strokeRoundedRect)) (load (field backend ctx)) bounds radius thickness tint))
+  (call-ptr (.strokeRoundedRect backend) (load (field backend ctx)) bounds radius thickness tint))
 
 (defn fill-rect [(backend (ptr Backend)) (bounds Frame) (tint Color)] (-> i64)
-  (call-ptr (load (field backend fillRect)) (load (field backend ctx)) bounds tint))
+  (call-ptr (.fillRect backend) (load (field backend ctx)) bounds tint))
 
 (defn draw-line [(backend (ptr Backend))
                  (fromHorizontal f64)
@@ -167,11 +168,11 @@
                  (toVertical f64)
                  (thickness f64)
                  (tint Color)] (-> i64)
-  (call-ptr (load (field backend line)) (load (field backend ctx))
+  (call-ptr (.line backend) (load (field backend ctx))
             fromHorizontal fromVertical toHorizontal toVertical thickness tint))
 
 (defn fill-circle [(backend (ptr Backend)) (centerHorizontal f64) (centerVertical f64) (radius f64) (tint Color)] (-> i64)
-  (call-ptr (load (field backend fillCircle)) (load (field backend ctx)) centerHorizontal centerVertical radius tint))
+  (call-ptr (.fillCircle backend) (load (field backend ctx)) centerHorizontal centerVertical radius tint))
 
 (defn stroke-circle [(backend (ptr Backend))
                      (centerHorizontal f64)
@@ -179,7 +180,7 @@
                      (radius f64)
                      (thickness f64)
                      (tint Color)] (-> i64)
-  (call-ptr (load (field backend strokeCircle)) (load (field backend ctx))
+  (call-ptr (.strokeCircle backend) (load (field backend ctx))
             centerHorizontal centerVertical radius thickness tint))
 
 (defn draw-ring [(backend (ptr Backend))
@@ -190,7 +191,7 @@
                  (startDegrees f64)
                  (endDegrees f64)
                  (tint Color)] (-> i64)
-  (call-ptr (load (field backend ring)) (load (field backend ctx))
+  (call-ptr (.ring backend) (load (field backend ctx))
             centerHorizontal centerVertical innerRadius outerRadius startDegrees endDegrees tint))
 
 (defn draw-label [(backend (ptr Backend))
@@ -200,10 +201,10 @@
                   (top f64)
                   (size f64)
                   (tint Color)] (-> i64)
-  (call-ptr (load (field backend drawText)) (load (field backend ctx)) font label left top size tint))
+  (call-ptr (.drawText backend) (load (field backend ctx)) font label left top size tint))
 
 (defn measure-label [(backend (ptr Backend)) (font (ptr i8)) (label (ptr i8)) (size f64)] (-> f64)
-  (call-ptr (load (field backend measureText)) (load (field backend ctx)) font label size))
+  (call-ptr (.measureText backend) (load (field backend ctx)) font label size))
 
 (defn draw-centered-label [(backend (ptr Backend))
                            (font (ptr i8))
@@ -215,18 +216,18 @@
     (draw-label backend
                 font
                 label
-                (+ (load (field bounds left)) (/ (- (load (field bounds width)) measured) 2.0))
-                (+ (load (field bounds top)) (/ (- (load (field bounds height)) size) 2.0))
+                (+ (.left bounds) (/ (- (.width bounds) measured) 2.0))
+                (+ (.top bounds) (/ (- (.height bounds) size) 2.0))
                 size
                 tint)))
 
 (defn draw-focus [(backend (ptr Backend)) (bounds Frame) (radius f64) (focused i64)] (-> i64)
   (if (= focused 1)
     (rounded-stroke backend
-                    (frame (- (load (field bounds left)) 3.0)
-                           (- (load (field bounds top)) 3.0)
-                           (+ (load (field bounds width)) 6.0)
-                           (+ (load (field bounds height)) 6.0))
+                    (frame (- (.left bounds) 3.0)
+                           (- (.top bounds) 3.0)
+                           (+ (.width bounds) 6.0)
+                           (+ (.height bounds) 6.0))
                     (+ radius 3.0)
                     2.0
                     (focus-ring))
@@ -237,14 +238,14 @@
 ;; ---------------------------------------------------------------------------
 
 (defn draw-button [(backend (ptr Backend)) (font (ptr i8)) (label (ptr i8)) (bounds Frame) (state Interaction)] (-> i64)
-  (let [disabled (= (load (field state disabled)) 1)
+  (let [disabled (= (.disabled state) 1)
         fill (if disabled
                (color 70 70 70)
-               (if (= (load (field state pressed)) 1) (color 199 199 199) (accent)))
+               (if (= (.pressed state) 1) (color 199 199 199) (accent)))
         ink (if disabled (text-muted) (accent-text))]
     (do
       (rounded-fill backend bounds 6.0 fill)
-      (draw-focus backend bounds 6.0 (load (field state focused)))
+      (draw-focus backend bounds 6.0 (.focused state))
       (draw-centered-label backend font label bounds 14.0 ink)
       0)))
 
@@ -254,16 +255,16 @@
                   (placeholder (ptr i8))
                   (bounds Frame)
                   (state Interaction)] (-> i64)
-  (let [hasValue (icmp-ne (load value) (cast i8 0))]
+  (let [hasValue (!= (load value) (cast i8 0))]
     (do
       (rounded-fill backend bounds 6.0 (surface))
       (rounded-stroke backend bounds 6.0 1.0 (border))
-      (draw-focus backend bounds 6.0 (load (field state focused)))
+      (draw-focus backend bounds 6.0 (.focused state))
       (draw-label backend
                   font
                   (if hasValue value placeholder)
-                  (+ (load (field bounds left)) 10.0)
-                  (+ (load (field bounds top)) 8.0)
+                  (+ (.left bounds) 10.0)
+                  (+ (.top bounds) 8.0)
                   14.0
                   (if hasValue (text) (text-muted)))
       0)))
@@ -274,16 +275,16 @@
                      (placeholder (ptr i8))
                      (bounds Frame)
                      (state Interaction)] (-> i64)
-  (let [hasValue (icmp-ne (load value) (cast i8 0))]
+  (let [hasValue (!= (load value) (cast i8 0))]
     (do
       (rounded-fill backend bounds 6.0 (surface))
       (rounded-stroke backend bounds 6.0 1.0 (border))
-      (draw-focus backend bounds 6.0 (load (field state focused)))
+      (draw-focus backend bounds 6.0 (.focused state))
       (draw-label backend
                   font
                   (if hasValue value placeholder)
-                  (+ (load (field bounds left)) 10.0)
-                  (+ (load (field bounds top)) 9.0)
+                  (+ (.left bounds) 10.0)
+                  (+ (.top bounds) 9.0)
                   14.0
                   (if hasValue (text) (text-muted)))
       0)))
@@ -294,29 +295,29 @@
                      (bounds Frame)
                      (checked i64)
                      (state Interaction)] (-> i64)
-  (let [box (frame (load (field bounds left))
-                   (+ (load (field bounds top)) (/ (- (load (field bounds height)) 16.0) 2.0))
+  (let [box (frame (.left bounds)
+                   (+ (.top bounds) (/ (- (.height bounds) 16.0) 2.0))
                    16.0
                    16.0)]
     (do
       (rounded-fill backend box 4.0 (if (= checked 1) (accent) (surface)))
       (rounded-stroke backend box 4.0 1.0 (border))
-      (draw-focus backend box 4.0 (load (field state focused)))
+      (draw-focus backend box 4.0 (.focused state))
       (if (= checked 1)
         (do
           (draw-line backend
-                     (+ (load (field box left)) 4.0) (+ (load (field box top)) 8.5)
-                     (+ (load (field box left)) 7.0) (+ (load (field box top)) 11.0)
+                     (+ (.left box) 4.0) (+ (.top box) 8.5)
+                     (+ (.left box) 7.0) (+ (.top box) 11.0)
                      2.0
                      (accent-text))
           (draw-line backend
-                     (+ (load (field box left)) 7.0) (+ (load (field box top)) 11.0)
-                     (+ (load (field box left)) 12.0) (+ (load (field box top)) 5.0)
+                     (+ (.left box) 7.0) (+ (.top box) 11.0)
+                     (+ (.left box) 12.0) (+ (.top box) 5.0)
                      2.0
                      (accent-text))
           0)
         0)
-      (draw-label backend font label (+ (load (field bounds left)) 24.0) (+ (load (field bounds top)) 5.0) 14.0 (text))
+      (draw-label backend font label (+ (.left bounds) 24.0) (+ (.top bounds) 5.0) 14.0 (text))
       0)))
 
 (defn draw-switch [(backend (ptr Backend))
@@ -325,36 +326,36 @@
                    (bounds Frame)
                    (checked i64)
                    (state Interaction)] (-> i64)
-  (let [track (frame (load (field bounds left))
-                     (+ (load (field bounds top)) (/ (- (load (field bounds height)) 24.0) 2.0))
+  (let [track (frame (.left bounds)
+                     (+ (.top bounds) (/ (- (.height bounds) 24.0) 2.0))
                      44.0
                      24.0)
-        knobLeft (if (= checked 1) (+ (load (field track left)) 22.0) (+ (load (field track left)) 2.0))]
+        knobLeft (if (= checked 1) (+ (.left track) 22.0) (+ (.left track) 2.0))]
     (do
       (rounded-fill backend track 12.0 (if (= checked 1) (accent) (surface-pressed)))
       (fill-circle backend
                    (+ knobLeft 10.0)
-                   (+ (load (field track top)) 12.0)
+                   (+ (.top track) 12.0)
                    10.0
                    (if (= checked 1) (accent-text) (text)))
-      (draw-focus backend track 12.0 (load (field state focused)))
-      (draw-label backend font label (+ (load (field bounds left)) 54.0) (+ (load (field bounds top)) 5.0) 14.0 (text))
+      (draw-focus backend track 12.0 (.focused state))
+      (draw-label backend font label (+ (.left bounds) 54.0) (+ (.top bounds) 5.0) 14.0 (text))
       0)))
 
 (defn draw-slider [(backend (ptr Backend)) (bounds Frame) (value f64) (state Interaction)] (-> i64)
   (let [clamped (larger 0.0 (smaller 1.0 value))
-        trackTop (+ (load (field bounds top)) (/ (- (load (field bounds height)) 4.0) 2.0))
-        activeWidth (* (load (field bounds width)) clamped)
-        knobHorizontal (+ (load (field bounds left)) (* (load (field bounds width)) clamped))
-        knobVertical (+ (load (field bounds top)) (/ (load (field bounds height)) 2.0))]
+        trackTop (+ (.top bounds) (/ (- (.height bounds) 4.0) 2.0))
+        activeWidth (* (.width bounds) clamped)
+        knobHorizontal (+ (.left bounds) (* (.width bounds) clamped))
+        knobVertical (+ (.top bounds) (/ (.height bounds) 2.0))]
     (do
-      (rounded-fill backend (frame (load (field bounds left)) trackTop (load (field bounds width)) 4.0) 2.0 (surface-subtle))
+      (rounded-fill backend (frame (.left bounds) trackTop (.width bounds) 4.0) 2.0 (surface-subtle))
       (if (> activeWidth 0.0)
-        (rounded-fill backend (frame (load (field bounds left)) trackTop activeWidth 4.0) 2.0 (accent))
+        (rounded-fill backend (frame (.left bounds) trackTop activeWidth 4.0) 2.0 (accent))
         0)
       (fill-circle backend knobHorizontal knobVertical 6.0 (color 255 255 255))
       (stroke-circle backend knobHorizontal knobVertical 6.0 1.0 (focus-ring))
-      (if (= (load (field state focused)) 1)
+      (if (= (.focused state) 1)
         (do
           (stroke-circle backend knobHorizontal knobVertical 9.0 1.0 (focus-ring))
           0)
@@ -370,7 +371,7 @@
   (do
     (rounded-fill backend bounds 6.0 (if (= checked 1) (surface-pressed) (surface)))
     (if (= checked 1) 0 (rounded-stroke backend bounds 6.0 1.0 (border)))
-    (draw-focus backend bounds 6.0 (load (field state focused)))
+    (draw-focus backend bounds 6.0 (.focused state))
     (draw-centered-label backend font label bounds 14.0 (text))
     0))
 
@@ -380,18 +381,18 @@
                   (bounds Frame)
                   (selected i64)
                   (state Interaction)] (-> i64)
-  (let [centerHorizontal (+ (load (field bounds left)) 8.0)
-        centerVertical (+ (load (field bounds top)) (/ (load (field bounds height)) 2.0))]
+  (let [centerHorizontal (+ (.left bounds) 8.0)
+        centerVertical (+ (.top bounds) (/ (.height bounds) 2.0))]
     (do
       (fill-circle backend centerHorizontal centerVertical 8.0 (surface))
       (stroke-circle backend centerHorizontal centerVertical 8.0 1.0 (border))
       (if (= selected 1)
         (do (fill-circle backend centerHorizontal centerVertical 4.0 (accent)) 0)
         0)
-      (if (= (load (field state focused)) 1)
+      (if (= (.focused state) 1)
         (do (stroke-circle backend centerHorizontal centerVertical 11.0 1.0 (focus-ring)) 0)
         0)
-      (draw-label backend font label (+ (load (field bounds left)) 24.0) (+ (load (field bounds top)) 5.0) 14.0 (text))
+      (draw-label backend font label (+ (.left bounds) 24.0) (+ (.top bounds) 5.0) 14.0 (text))
       0)))
 
 ;; ---------------------------------------------------------------------------
@@ -408,22 +409,22 @@
     (rounded-fill backend bounds 8.0 (surface))
     (rounded-stroke backend bounds 8.0 1.0 (if (= destructive 1) (danger) (border)))
     (draw-label backend font (if (= destructive 1) c"!" c"i")
-                (+ (load (field bounds left)) 14.0) (+ (load (field bounds top)) 14.0) 14.0
+                (+ (.left bounds) 14.0) (+ (.top bounds) 14.0) 14.0
                 (if (= destructive 1) (danger) (text)))
-    (draw-label backend font title (+ (load (field bounds left)) 40.0) (+ (load (field bounds top)) 12.0) 14.0 (text))
-    (draw-label backend font description (+ (load (field bounds left)) 40.0) (+ (load (field bounds top)) 36.0) 13.0 (text-muted))
+    (draw-label backend font title (+ (.left bounds) 40.0) (+ (.top bounds) 12.0) 14.0 (text))
+    (draw-label backend font description (+ (.left bounds) 40.0) (+ (.top bounds) 36.0) 13.0 (text-muted))
     0))
 
 (defn draw-avatar [(backend (ptr Backend)) (font (ptr i8)) (initials (ptr i8)) (bounds Frame)] (-> i64)
   (do
-    (rounded-fill backend bounds (/ (load (field bounds height)) 2.0) (surface-subtle))
+    (rounded-fill backend bounds (/ (.height bounds) 2.0) (surface-subtle))
     (draw-centered-label backend font initials bounds 14.0 (text))
     0))
 
 (defn draw-badge [(backend (ptr Backend)) (font (ptr i8)) (label (ptr i8)) (bounds Frame) (strong i64)] (-> i64)
   (do
-    (rounded-fill backend bounds (/ (load (field bounds height)) 2.0) (if (= strong 1) (accent) (surface-subtle)))
-    (if (= strong 1) 0 (rounded-stroke backend bounds (/ (load (field bounds height)) 2.0) 1.0 (border)))
+    (rounded-fill backend bounds (/ (.height bounds) 2.0) (if (= strong 1) (accent) (surface-subtle)))
+    (if (= strong 1) 0 (rounded-stroke backend bounds (/ (.height bounds) 2.0) 1.0 (border)))
     (draw-centered-label backend font label bounds 12.0 (if (= strong 1) (accent-text) (text)))
     0))
 
@@ -440,7 +441,7 @@
   (do
     (rounded-fill backend bounds 10.0 (if (= agent 1) (surface) (surface-subtle)))
     (if (= agent 1) (rounded-stroke backend bounds 10.0 1.0 (border)) 0)
-    (draw-label backend font message (+ (load (field bounds left)) 14.0) (+ (load (field bounds top)) 12.0) 13.0 (text))
+    (draw-label backend font message (+ (.left bounds) 14.0) (+ (.top bounds) 12.0) 13.0 (text))
     0))
 
 (defn draw-card [(backend (ptr Backend))
@@ -451,8 +452,8 @@
   (do
     (rounded-fill backend bounds 10.0 (surface))
     (rounded-stroke backend bounds 10.0 1.0 (border))
-    (draw-label backend font title (+ (load (field bounds left)) 18.0) (+ (load (field bounds top)) 18.0) 16.0 (text))
-    (draw-label backend font description (+ (load (field bounds left)) 18.0) (+ (load (field bounds top)) 48.0) 13.0 (text-muted))
+    (draw-label backend font title (+ (.left bounds) 18.0) (+ (.top bounds) 18.0) 16.0 (text))
+    (draw-label backend font description (+ (.left bounds) 18.0) (+ (.top bounds) 48.0) 13.0 (text-muted))
     0))
 
 (defn draw-separator [(backend (ptr Backend)) (bounds Frame)] (-> i64)
@@ -464,14 +465,14 @@
 (defn draw-progress [(backend (ptr Backend)) (bounds Frame) (value f64)] (-> i64)
   (let [clamped (larger 0.0 (smaller 1.0 value))]
     (do
-      (rounded-fill backend bounds (/ (load (field bounds height)) 2.0) (surface-subtle))
+      (rounded-fill backend bounds (/ (.height bounds) 2.0) (surface-subtle))
       (if (> clamped 0.0)
         (rounded-fill backend
-                      (frame (load (field bounds left))
-                             (load (field bounds top))
-                             (* (load (field bounds width)) clamped)
-                             (load (field bounds height)))
-                      (/ (load (field bounds height)) 2.0)
+                      (frame (.left bounds)
+                             (.top bounds)
+                             (* (.width bounds) clamped)
+                             (.height bounds))
+                      (/ (.height bounds) 2.0)
                       (accent))
         0)
       0)))
@@ -480,8 +481,8 @@
   (let [start (* time 210.0)]
     (do
       (draw-ring backend
-                 (+ (load (field bounds left)) (/ (load (field bounds width)) 2.0))
-                 (+ (load (field bounds top)) (/ (load (field bounds height)) 2.0))
+                 (+ (.left bounds) (/ (.width bounds) 2.0))
+                 (+ (.top bounds) (/ (.height bounds) 2.0))
                  6.0
                  8.0
                  start
@@ -498,14 +499,14 @@
                   (cells (ptr (ptr i8)))
                   (rowCount i64)
                   (columnSplit f64)] (-> i64)
-  (let [rowHeight (/ (load (field bounds height)) (cast f64 rowCount))
-        firstColumn (+ (load (field bounds left)) (* (load (field bounds width)) columnSplit))]
+  (let [rowHeight (/ (.height bounds) (cast f64 rowCount))
+        firstColumn (+ (.left bounds) (* (.width bounds) columnSplit))]
     (do
       (rounded-fill backend bounds 8.0 (surface))
       (rounded-stroke backend bounds 8.0 1.0 (border))
       (draw-line backend
-                 firstColumn (load (field bounds top))
-                 firstColumn (+ (load (field bounds top)) (load (field bounds height)))
+                 firstColumn (.top bounds)
+                 firstColumn (+ (.top bounds) (.height bounds))
                  1.0
                  (border))
       (for [row 1 rowCount]
@@ -540,17 +541,17 @@
   (do
     (rounded-fill backend bounds 8.0 (surface))
     (rounded-stroke backend bounds 8.0 1.0 (border))
-    (draw-label backend font title (+ (load (field bounds left)) 14.0) (+ (load (field bounds top)) 13.0) 14.0 (text))
+    (draw-label backend font title (+ (.left bounds) 14.0) (+ (.top bounds) 13.0) 14.0 (text))
     (draw-label backend font (if (= open 1) c"-" c"+")
-                (- (+ (load (field bounds left)) (load (field bounds width))) 26.0)
-                (+ (load (field bounds top)) 12.0) 16.0 (text-muted))
+                (- (+ (.left bounds) (.width bounds)) 26.0)
+                (+ (.top bounds) 12.0) 16.0 (text-muted))
     (if (= open 1)
       (do
-        (draw-separator backend (frame (+ (load (field bounds left)) 14.0) (+ (load (field bounds top)) 43.0) (- (load (field bounds width)) 28.0) 1.0))
-        (draw-label backend font body (+ (load (field bounds left)) 14.0) (+ (load (field bounds top)) 57.0) 13.0 (text-muted))
+        (draw-separator backend (frame (+ (.left bounds) 14.0) (+ (.top bounds) 43.0) (- (.width bounds) 28.0) 1.0))
+        (draw-label backend font body (+ (.left bounds) 14.0) (+ (.top bounds) 57.0) 13.0 (text-muted))
         0)
       0)
-    (draw-focus backend bounds 8.0 (load (field state focused)))
+    (draw-focus backend bounds 8.0 (.focused state))
     0))
 
 (defn draw-tabs [(backend (ptr Backend))
@@ -560,24 +561,24 @@
                  (second (ptr i8))
                  (third (ptr i8))
                  (selected i64)] (-> i64)
-  (let [segmentWidth (/ (load (field bounds width)) 3.0)]
+  (let [segmentWidth (/ (.width bounds) 3.0)]
     (do
       (rounded-fill backend bounds 8.0 (surface-subtle))
       (rounded-fill backend
-                    (frame (+ (load (field bounds left)) (* segmentWidth (cast f64 selected)))
-                           (+ (load (field bounds top)) 3.0)
+                    (frame (+ (.left bounds) (* segmentWidth (cast f64 selected)))
+                           (+ (.top bounds) 3.0)
                            segmentWidth
-                           (- (load (field bounds height)) 6.0))
+                           (- (.height bounds) 6.0))
                     6.0
                     (surface))
       (draw-centered-label backend font first
-                           (frame (load (field bounds left)) (load (field bounds top)) segmentWidth (load (field bounds height)))
+                           (frame (.left bounds) (.top bounds) segmentWidth (.height bounds))
                            13.0 (if (= selected 0) (text) (text-muted)))
       (draw-centered-label backend font second
-                           (frame (+ (load (field bounds left)) segmentWidth) (load (field bounds top)) segmentWidth (load (field bounds height)))
+                           (frame (+ (.left bounds) segmentWidth) (.top bounds) segmentWidth (.height bounds))
                            13.0 (if (= selected 1) (text) (text-muted)))
       (draw-centered-label backend font third
-                           (frame (+ (load (field bounds left)) (* segmentWidth 2.0)) (load (field bounds top)) segmentWidth (load (field bounds height)))
+                           (frame (+ (.left bounds) (* segmentWidth 2.0)) (.top bounds) segmentWidth (.height bounds))
                            13.0 (if (= selected 2) (text) (text-muted)))
       0)))
 
@@ -588,7 +589,7 @@
                          (second (ptr i8))
                          (third (ptr i8))
                          (selected i64)] (-> i64)
-  (let [segmentWidth (/ (load (field bounds width)) 3.0)]
+  (let [segmentWidth (/ (.width bounds) 3.0)]
     (do
       (for [segment 0 3]
         (do
@@ -608,13 +609,13 @@
                           1.0
                           (border))))
       (draw-centered-label backend font first
-                           (frame (load (field bounds left)) (load (field bounds top)) segmentWidth (load (field bounds height)))
+                           (frame (.left bounds) (.top bounds) segmentWidth (.height bounds))
                            13.0 (if (= selected 0) (accent-text) (text)))
       (draw-centered-label backend font second
-                           (frame (+ (load (field bounds left)) segmentWidth) (load (field bounds top)) segmentWidth (load (field bounds height)))
+                           (frame (+ (.left bounds) segmentWidth) (.top bounds) segmentWidth (.height bounds))
                            13.0 (if (= selected 1) (accent-text) (text)))
       (draw-centered-label backend font third
-                           (frame (+ (load (field bounds left)) (* segmentWidth 2.0)) (load (field bounds top)) segmentWidth (load (field bounds height)))
+                           (frame (+ (.left bounds) (* segmentWidth 2.0)) (.top bounds) segmentWidth (.height bounds))
                            13.0 (if (= selected 2) (accent-text) (text)))
       0)))
 
@@ -630,9 +631,9 @@
 ;; Square cells laid out left to right, one per label. The caller supplies the
 ;; labels, so previous/next affordances and page numbering are its choice.
 (defn pagination-cell-frame [(bounds Frame) (item i64)] (-> Frame)
-  (let [cell (load (field bounds height))]
-    (frame (+ (load (field bounds left)) (* cell (cast f64 item)))
-           (load (field bounds top))
+  (let [cell (.height bounds)]
+    (frame (+ (.left bounds) (* cell (cast f64 item)))
+           (.top bounds)
            cell
            cell)))
 
@@ -662,16 +663,16 @@
   (do
     (draw-input backend font label placeholder bounds state)
     (draw-label backend font (if (= open 1) c"^" c"v")
-                (- (+ (load (field bounds left)) (load (field bounds width))) 24.0)
-                (+ (load (field bounds top)) 8.0) 13.0 (text-muted))
+                (- (+ (.left bounds) (.width bounds)) 24.0)
+                (+ (.top bounds) 8.0) 13.0 (text-muted))
     0))
 
 ;; The popup half of a select/combobox: drawn separately so callers control
 ;; overlay ordering instead of the widget assuming it paints last.
 (defn draw-select-menu [(backend (ptr Backend)) (bounds Frame) (height f64)] (-> i64)
-  (let [panel (frame (load (field bounds left))
-                     (+ (+ (load (field bounds top)) (load (field bounds height))) 6.0)
-                     (load (field bounds width))
+  (let [panel (frame (.left bounds)
+                     (+ (+ (.top bounds) (.height bounds)) 6.0)
+                     (.width bounds)
                      height)]
     (do
       (rounded-fill backend panel 8.0 (surface))
@@ -688,11 +689,11 @@
   (do
     (if (= emphasis 2)
       (rounded-fill backend
-                    (frame (+ (load (field bounds left)) 5.0) (- top 6.0) (- (load (field bounds width)) 10.0) 28.0)
+                    (frame (+ (.left bounds) 5.0) (- top 6.0) (- (.width bounds) 10.0) 28.0)
                     5.0
                     (surface-subtle))
       0)
-    (draw-label backend font label (+ (load (field bounds left)) 12.0) top 13.0
+    (draw-label backend font label (+ (.left bounds) 12.0) top 13.0
                 (if (= emphasis 0) (text-muted) (text)))
     0))
 
@@ -746,7 +747,7 @@
       (draw-scrim backend screenWidth screenHeight 166)
       (draw-card backend font title description bounds)
       (draw-button backend font confirm
-                   (frame (+ (load (field bounds left)) 252.0) (+ (load (field bounds top)) 154.0) 150.0 36.0)
+                   (frame (+ (.left bounds) 252.0) (+ (.top bounds) 154.0) 150.0 36.0)
                    (interaction 0 0 1 0))
       0)))
 
@@ -760,8 +761,8 @@
     (do
       (draw-scrim backend screenWidth screenHeight 120)
       (rounded-fill backend bounds 14.0 (surface))
-      (draw-label backend font title 28.0 (+ (load (field bounds top)) 28.0) 18.0 (text))
-      (draw-label backend font description 28.0 (+ (load (field bounds top)) 60.0) 13.0 (text-muted))
+      (draw-label backend font title 28.0 (+ (.top bounds) 28.0) 18.0 (text))
+      (draw-label backend font description 28.0 (+ (.top bounds) 60.0) 13.0 (text-muted))
       0)))
 
 (defn draw-sheet [(backend (ptr Backend))
@@ -774,8 +775,8 @@
     (do
       (draw-scrim backend screenWidth screenHeight 120)
       (fill-rect backend bounds (surface))
-      (draw-label backend font title (+ (load (field bounds left)) 28.0) 32.0 18.0 (text))
-      (draw-label backend font description (+ (load (field bounds left)) 28.0) 64.0 13.0 (text-muted))
+      (draw-label backend font title (+ (.left bounds) 28.0) 32.0 18.0 (text))
+      (draw-label backend font description (+ (.left bounds) 28.0) 64.0 13.0 (text-muted))
       0)))
 
 (defn draw-resizable [(backend (ptr Backend))
@@ -784,17 +785,17 @@
                       (leadingLabel (ptr i8))
                       (trailingLabel (ptr i8))
                       (split f64)] (-> i64)
-  (let [divider (+ (load (field bounds left)) (* (load (field bounds width)) split))]
+  (let [divider (+ (.left bounds) (* (.width bounds) split))]
     (do
       (rounded-fill backend bounds 8.0 (surface))
       (rounded-stroke backend bounds 8.0 1.0 (border))
       (draw-line backend
-                 divider (load (field bounds top))
-                 divider (+ (load (field bounds top)) (load (field bounds height)))
+                 divider (.top bounds)
+                 divider (+ (.top bounds) (.height bounds))
                  2.0
                  (border))
-      (draw-label backend font leadingLabel (+ (load (field bounds left)) 14.0) (+ (load (field bounds top)) 14.0) 13.0 (text))
-      (draw-label backend font trailingLabel (+ divider 14.0) (+ (load (field bounds top)) 14.0) 13.0 (text))
+      (draw-label backend font leadingLabel (+ (.left bounds) 14.0) (+ (.top bounds) 14.0) 13.0 (text))
+      (draw-label backend font trailingLabel (+ divider 14.0) (+ (.top bounds) 14.0) 13.0 (text))
       0)))
 
 ;; ---------------------------------------------------------------------------
