@@ -50,3 +50,4 @@ tests/parity/out/
 catalog-*.svg
 .DS_Store
 .claude/settings.local.json
+/build
