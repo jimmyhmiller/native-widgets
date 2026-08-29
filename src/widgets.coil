@@ -38,11 +38,11 @@
 (defstruct Interaction
   [(hovered i64) (pressed i64) (focused i64) (disabled i64)])
 
-;; A font is opaque to this library: it is whatever handle the backend gave the
-;; caller. The library only ever hands it back to drawText / measureText.
-;;
-;; Every entry takes the backend's own ctx pointer first and returns i64 so the
-;; vtable stays uniform; drawing entries return 0.
+;;; A font is opaque to this library: it is whatever handle the backend gave the
+;;; caller. The library only ever hands it back to drawText / measureText.
+;;;
+;;; Every entry takes the backend's own ctx pointer first and returns i64 so the
+;;; vtable stays uniform; drawing entries return 0.
 (defstruct Backend
   [(ctx (ptr i8))
    ;; ctx, tint
@@ -115,8 +115,8 @@
 (defn contains-int [(bounds Frame) (horizontal f64) (vertical f64)] (-> i64)
   (if (contains bounds horizontal vertical) 1 0))
 
-;; Derives hover/press from a pointer position without owning any state: the
-;; caller decides what is focused and what is disabled.
+;;; Derives hover/press from a pointer position without owning any state: the
+;;; caller decides what is focused and what is disabled.
 (defn pointer-interaction [(bounds Frame)
                            (horizontal f64)
                            (vertical f64)
@@ -490,9 +490,9 @@
                  (accent))
       0)))
 
-;; A two-column table. `cells` is a row-major array of 2 * rowCount strings,
-;; the first row being the header. The library owns the chrome and the cell
-;; geometry; the caller owns every string.
+;;; A two-column table. `cells` is a row-major array of 2 * rowCount strings,
+;;; the first row being the header. The library owns the chrome and the cell
+;;; geometry; the caller owns every string.
 (defn draw-table [(backend (ptr Backend))
                   (font (ptr i8))
                   (bounds Frame)
@@ -628,8 +628,8 @@
                          (selected i64)] (-> i64)
   (draw-button-group backend font bounds first second third selected))
 
-;; Square cells laid out left to right, one per label. The caller supplies the
-;; labels, so previous/next affordances and page numbering are its choice.
+;;; Square cells laid out left to right, one per label. The caller supplies the
+;;; labels, so previous/next affordances and page numbering are its choice.
 (defn pagination-cell-frame [(bounds Frame) (item i64)] (-> Frame)
   (let [cell (.height bounds)]
     (frame (+ (.left bounds) (* cell (cast f64 item)))
@@ -667,8 +667,8 @@
                 (+ (.top bounds) 8.0) 13.0 (text-muted))
     0))
 
-;; The popup half of a select/combobox: drawn separately so callers control
-;; overlay ordering instead of the widget assuming it paints last.
+;;; The popup half of a select/combobox: drawn separately so callers control
+;;; overlay ordering instead of the widget assuming it paints last.
 (defn draw-select-menu [(backend (ptr Backend)) (bounds Frame) (height f64)] (-> i64)
   (let [panel (frame (.left bounds)
                      (+ (+ (.top bounds) (.height bounds)) 6.0)
@@ -679,7 +679,7 @@
       (rounded-stroke backend panel 8.0 1.0 (border))
       0)))
 
-;; `emphasis`: 0 muted, 1 active, 2 active with a highlight backing.
+;;; `emphasis`: 0 muted, 1 active, 2 active with a highlight backing.
 (defn draw-select-option [(backend (ptr Backend))
                           (font (ptr i8))
                           (label (ptr i8))
